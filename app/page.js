@@ -1,95 +1,149 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client'
+import React, { useState } from 'react';
+import styles from './page.module.css';
+
 
 export default function Home() {
+  const [entries, setEntries] = useState([]);
+  const [newEntry, setNewEntry] = useState({ name: '', address: '', image: '', type: '' })
+  const [filter, setFilter] = useState('student');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleFilter = (e) => {
+    if (e.target.value != '') {
+      setFilter(e.target.value);
+    }
+  }
+
+  const handleChange = (e) => {
+    if (e.target.value != '') {
+      setNewEntry({ ...newEntry, [e.target.name]: e.target.value });
+    }
+  }
+
+  const handleImageSelect = (e) => {
+    if (e.target.files.length > 0) {
+      let file = e.target.files[0];
+      let type = file.type;
+      if (!type.startsWith('image/')) {
+        alert('please upload image only');
+        return;
+      }
+      let imaegUrl = URL.createObjectURL(file);
+      setNewEntry({ ...newEntry, 'image': imaegUrl })
+    }
+  }
+
+  const handleAddNewEntry = (e) => {
+    // check if any of the values are not entered i.e any of the value is empty in newEntry
+    let isEmpty = false;
+    for (let key in newEntry) {
+      if (newEntry[key] == '') {
+        alert(key + ' not entered please enter all values');
+        isEmpty = true;
+        break;
+      }
+    }
+    if (isEmpty)
+      return;
+
+    setEntries([...entries, newEntry]);
+    setFilter(newEntry.type);
+    setNewEntry({ name: '', address: '', image: '', type: '' });
+  }
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
+    <div className={styles.container}>
+      <div>
+        <h2>Add New Entry</h2>
         <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+          <label htmlFor="name">Name: </label>
+          <input type="text" id="name" value={newEntry.name} name="name" onChange={handleChange} />
         </div>
+        <div>
+          <label htmlFor="address">Address: </label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={newEntry.address}
+            onChange={handleChange}
+          />
+        </div>
+        <div>
+          <label htmlFor="type">Type</label>
+          <select id='type' name='type' value={newEntry.type} onChange={handleChange}>
+            <option value=''>---Select Type---</option>
+            <option value='teacher'>Teacher</option>
+            <option value='student'>Student</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="image">Image Upload </label>
+          <input
+            type="file"
+            id="image"
+            name="image"
+            onChange={handleImageSelect}
+          />
+        </div>
+        <button className={styles.addButton} onClick={handleAddNewEntry}>
+          Add
+        </button>
       </div>
+      <div style={{width:'70%'}}>
+        <h1>Address Book</h1>
+        <div>
+          <label htmlFor="type">User Type: </label>
+          <select id="type" name="type" value={filter} onChange={handleFilter}>
+            <option value="">--Select Type--</option>
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+          <label htmlFor='search' style={{ marginLeft: '20px' }}>Search</label>
+          <input type='text' id='search' value={searchQuery} onChange={handleSearch} />
+        </div>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Image</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry, index) => {
+              let searchFound = false;
+              let search = searchQuery.toLowerCase();
+              for (let key in entry) {
+                if (key == 'image' || key == 'type') {
+                  // don't search in image names or type names
+                  continue;
+                }
+                if (entry[key].toLowerCase().includes(search)) {
+                  searchFound = true;
+                  break;
+                }
+              }
+              if (entry.type == filter && searchFound)
+                return (
+                  <tr key={index}>
+                    <td>{entry.name}</td>
+                    <td>{entry.address}</td>
+                    <td>
+                      <img src={entry.image} alt="Profile" className={styles.image} />
+                    </td>
+                  </tr>
+                )
+            })}
+          </tbody>
+        </table>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
